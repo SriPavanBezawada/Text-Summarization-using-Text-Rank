@@ -3,3 +3,4 @@ Gunicorn
 nltk
 numpy
 networkx
+summarization_script
