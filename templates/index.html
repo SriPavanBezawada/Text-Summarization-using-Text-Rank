@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Summarizer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px; /* Add vertical space */
+        }
+        form {
+            text-align: center;
+            margin-bottom: 20px; /* Add vertical space */
+        }
+        #textInput {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        #fileInput {
+            margin-bottom: 10px;
+        }
+        input[type="radio"] {
+            margin-right: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #summary {
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            margin-bottom: 20px; /* Add vertical space */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Text Summarizer</h1>
+        <form id="textForm" enctype="multipart/form-data">
+            <textarea id="textInput" rows="10" placeholder="Enter text here"></textarea><br>
+            <input type="file" id="fileInput" onchange="loadFile()"><br>
+            <input type="radio" name="summaryLength" value="20" checked> 20%
+            <input type="radio" name="summaryLength" value="30"> 30%
+            <input type="radio" name="summaryLength" value="40"> 40%<br>
+            <button type="button" onclick="summarize()">Summarize</button>
+        </form>
+        <div id="summary"></div>
+    </div>
+
+    <script>
+        function loadFile() {
+            var input = document.getElementById('fileInput');
+            var reader = new FileReader();
+            reader.onload = function() {
+                var text = reader.result;
+                document.getElementById('textInput').value = text;
+            };
+            reader.readAsText(input.files[0]);
+        }
+
+        function summarize() {
+            var text = document.getElementById("textInput").value;
+            var file = document.getElementById("fileInput").files[0];
+            var formData = new FormData();
+
+            // Check if text is empty and file is provided
+            if (text === '' && file) {
+                var reader = new FileReader();
+                reader.onload = function(event) {
+                    // Set the file content as the value of the text area
+                    document.getElementById("textInput").value = event.target.result;
+                    formData.append("text", event.target.result); // Append file content to FormData
+                    formData.append("file", file);
+                    var summaryLength = document.querySelector('input[name="summaryLength"]:checked').value;
+                    formData.append("summaryLength", summaryLength);
+
+                    fetch("/summarize", {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(response => response.json()) // Parse response as JSON
+                    .then(data => {
+                        document.getElementById("summary").innerText = data.summary; // Extract summary text
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                };
+                reader.readAsText(file);
+            } else {
+                formData.append("text", text);
+                formData.append("file", file);
+                var summaryLength = document.querySelector('input[name="summaryLength"]:checked').value;
+                formData.append("summaryLength", summaryLength);
+
+                fetch("/summarize", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json()) // Parse response as JSON
+                .then(data => {
+                    document.getElementById("summary").innerText = data.summary; // Extract summary text
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
